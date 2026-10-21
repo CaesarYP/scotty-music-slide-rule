@@ -4,4 +4,4 @@ Inspired by [https://www.absolutelyunderstandguitar.com/desktop/SR/index.html](h
 
 ## GitHub Pages
 
-[https://caesaryp.github.io/music-slide-rule/](https://caesaryp.github.io/music-slide-rule/)
+[https://caesaryp.github.io/scotty-music-slide-rule/](https://caesaryp.github.io/scotty-music-slide-rule/)
