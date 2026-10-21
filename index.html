@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Music Slide Rule 音乐滑尺：选择调性，查看常用音阶、调式、和弦与琶音。">
+<meta name="theme-color" content="#183743">
+<meta name="color-scheme" content="light">
+<title>Music Slide Rule | 音阶、调式与和弦</title>
+
+<style>
+:root{
+  --ink:#183743;
+  --ink-soft:#38545c;
+  --muted:#67777a;
+  --paper:#fffefa;
+  --canvas:#f0ede5;
+  --accent:#d89a43;
+  --accent-soft:#fff0d8;
+  --teal:#28777b;
+  --line:#dadbd5;
+  --line-light:#eaebe7;
+  --shadow:0 17px 52px rgba(31,43,40,.09);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--canvas);color:var(--ink);font-family:Arial,"Microsoft YaHei UI","PingFang SC",sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #e3a64b;outline-offset:3px}
+.shell{max-width:1250px;padding:36px 28px 44px;margin:0 auto}
+.masthead{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:25px}
+.overline{color:var(--teal);font-size:11px;font-weight:800;letter-spacing:.19em;text-transform:uppercase;display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.overline .sigil{display:inline-flex;align-items:center;justify-content:center;background:var(--teal);color:white;width:26px;height:26px;border-radius:50%;font-size:17px;letter-spacing:0}
+h1{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,4.5vw,55px);font-weight:700;line-height:1.08;letter-spacing:-.042em}
+h1 span{font-style:italic;color:var(--teal)}
+.lede{font-size:13px;color:var(--muted);margin:13px 0 0;line-height:1.75}
+
+.masthead-side strong{font-size:11px;letter-spacing:.15em}
+.masthead-side p{font-size:12px;line-height:1.7;color:var(--muted);margin:7px 0 0}
+.toolbar{border:1px solid #cfd4cc;border-radius:14px;padding:20px 22px;background:var(--paper);box-shadow:0 5px 16px rgba(30,50,40,.04)}
+.toolbar-top{display:flex;align-items:center;gap:20px;justify-content:space-between}
+.selection{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.key-summary{display:flex;align-items:center;gap:12px}
+.key-box{width:94px;min-width:94px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;border:1px solid var(--ink);padding:8px;background:var(--ink);color:white}
+.key-box small{font-size:9px;letter-spacing:.13em;font-weight:700;opacity:.7}
+.key-box strong{font-size:36px;line-height:1.1;font-family:Georgia,serif;font-weight:600;margin:3px 0}
+.key-description{line-height:1.65}
+.key-description .key-caption{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--teal)}
+.key-description .key-headline{font-weight:800;font-size:17px}
+.key-description .key-sub{font-size:12px;color:var(--muted)}
+.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.small-btn{height:36px;border-radius:7px;background:white;border:1px solid #cdd6d1;color:var(--ink);padding:0 12px;font-size:12px;font-weight:750;white-space:nowrap}
+.small-btn:hover{border-color:var(--teal);background:#edf7f4}
+.mode-switch{border:1px solid #cbd6d1;border-radius:8px;display:flex;overflow:hidden}
+.mode-switch button{border:0;background:#fff;color:#496066;font-size:12px;padding:10px 11px;font-weight:700;border-right:1px solid #dfe4e1}
+.mode-switch button:last-child{border-right:0}
+.mode-switch button[aria-pressed=true]{background:var(--teal);color:#fff}
+
+
+.paper-area{margin-top:22px}
+.paper-overflow{overflow-x:auto;overscroll-behavior-x:contain;border-radius:12px;box-shadow:var(--shadow);background:var(--paper)}
+.paper{min-width:970px;border:1px solid #a8aaa3;background:var(--paper);padding:24px 29px 32px;position:relative}
+.paper:before{content:"";position:absolute;left:11px;right:11px;top:11px;bottom:11px;border:1px solid #ecece6;pointer-events:none}
+.paper-heading{position:relative;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:13px;margin-bottom:20px}
+.paper-heading-main{display:flex;align-items:baseline;gap:13px}
+.paper-heading .number{font-family:Georgia,serif;font-size:34px;color:var(--accent);line-height:1}
+.paper-heading h2{font-size:17px;letter-spacing:.1em;margin:0;line-height:1.4}
+.paper-heading small{font-size:10px;letter-spacing:.06em;color:var(--muted);font-weight:700}
+
+.mode-columns{display:grid;grid-template-columns:1fr 1fr;gap:35px}
+.sheet-label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;padding:0 0 10px;border-bottom:1px solid #ccd3cf}
+.sheet-label strong{font-size:13px;letter-spacing:.12em}
+.sheet-label span{font-size:11px;color:var(--muted)}
+.mode-row{display:grid;grid-template-columns:35px minmax(0,1fr);gap:8px;border-bottom:1px dashed #e4e5df;min-height:70px;padding:8px 0 7px}
+.mode-row:last-child{border-bottom:none}
+.roman{font-family:Georgia,serif;font-size:22px;font-weight:700;color:var(--teal);padding-top:17px;text-align:center;line-height:1}
+.mode-title{display:flex;align-items:baseline;gap:8px;min-height:16px;line-height:1.2;white-space:nowrap}
+.mode-title strong{font-size:11px;letter-spacing:.06em}
+.mode-title span{font-size:10px;color:var(--muted)}
+.mode-title .mode-tonic{margin-left:auto;color:var(--teal);font-weight:800;font-size:10px;letter-spacing:0}
+.note-track{position:relative;display:flex;align-items:start;justify-content:space-between;gap:3px;width:100%;padding-top:3px;min-height:39px}
+.note-track:before{content:"";position:absolute;z-index:0;top:18px;left:10px;right:10px;height:6px;background:#dadbd7}
+.note-chip{position:relative;z-index:1;display:flex;align-items:center;flex-direction:column;justify-content:flex-start;min-width:33px;color:var(--ink);flex-shrink:0}
+.note-chip .note-face{min-width:28px;min-height:27px;border:1.3px solid #415159;border-radius:1px;display:flex;align-items:center;justify-content:center;padding:2px 3px;background:#fff;font-size:17px;font-weight:800;line-height:1;font-family:Arial,sans-serif}
+.note-chip.accidental .note-face{min-width:37px;background:var(--ink);color:#fff;border-color:var(--ink);font-size:11px;padding:1px 3px;line-height:.95;display:flex;flex-direction:column;gap:0}
+.note-chip .note-face > span{white-space:nowrap}
+.note-chip .degree{font-size:9px;font-weight:800;white-space:nowrap;line-height:1.1;margin-top:2px;letter-spacing:-.01em;color:#5f6462}
+.note-chip.tonic .note-face{outline:2px solid var(--accent);outline-offset:1px}
+.note-chip.tonic .degree{color:#986322}
+.minor-guide{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 11px;border:1px solid #eadcc2;background:#fffaf0;border-radius:5px;padding:12px 14px;margin-top:17px;color:#59666a;font-size:11px;line-height:1.75}
+.minor-guide strong{color:#845923;white-space:nowrap;font-size:11px;letter-spacing:.025em}
+.minor-guide b{color:#28777b}
+.minor-example{color:#805a31;font-weight:600}
+.extras-heading{margin-top:23px}
+.extras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.extra-card{border:1px solid #e1e3dc;background:#fbfbf7;border-radius:4px;min-height:80px;padding:12px 12px 10px}
+.extra-title{font-size:11px;font-weight:800;letter-spacing:.055em;white-space:nowrap}
+.extra-title small{font-size:10px;font-weight:400;color:var(--muted);letter-spacing:0;margin-left:5px}
+.extra-card .note-track{margin-top:8px}
+.extra-card .note-chip .note-face{font-size:14px;min-width:24px;min-height:24px}
+.extra-card .note-chip.accidental .note-face{font-size:10px;min-width:32px}
+.extra-card .note-track:before{top:15px;height:5px}
+.extras + .paper-heading{margin-top:32px}
+.chord-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:17px}
+.chord-column{min-width:0}
+.chord-category{font-size:12px;font-weight:900;letter-spacing:.11em;color:var(--teal);border-bottom:1px solid #b7c9c4;padding-bottom:9px;margin-bottom:3px}
+.chord-card{padding:12px 0 7px;border-bottom:1px dashed #e0e3dc;min-height:81px}
+.chord-card:last-child{border-bottom:0}
+.chord-title{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-height:25px;line-height:1.15}
+.chord-title strong{font-size:10.5px;letter-spacing:.015em;white-space:nowrap}
+.chord-title span{font-size:10px;color:var(--muted)}
+.chord-card .note-track{margin-top:5px;gap:2px}
+.chord-card .note-track:before{top:14px;height:6px}
+.chord-card .note-chip{min-width:22px}
+.chord-card .note-chip .note-face{font-size:14px;min-width:23px;min-height:24px;padding:1px 2px}
+.chord-card .note-chip.accidental .note-face{font-size:9px;min-width:28px}
+.chord-card .note-chip .degree{font-size:8px}
+.paper-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:21px;border-top:1px solid #bdc8c2;padding-top:13px}
+.paper-bottom small{font-size:9px;color:var(--muted);line-height:1.7}
+
+.slider-module{background:#183743;color:#fff;border-radius:10px;margin-top:18px;padding:18px 22px 15px;box-shadow:0 10px 20px rgba(24,55,67,.09)}
+.slider-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.slider-label{font-size:13px;font-weight:900;letter-spacing:.12em}
+
+.slider-control{width:100%;height:24px;margin:8px 0 1px;accent-color:#e8b76e;cursor:pointer}
+.slider-ticks{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));text-align:center;gap:0;margin-top:4px}
+.slider-ticks span{font-size:11px;color:#c6d4d3}
+.slider-ticks span.active{color:#efbd77;font-weight:900}
+.legend-row{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.legend{display:flex;gap:15px;align-items:center;flex-wrap:wrap;font-size:11px;color:#cbd9d6}
+.legend-key{width:15px;height:14px;background:white;border:1px solid #546a6b;display:inline-block;vertical-align:-3px;margin-right:5px}
+.legend-key.dark{background:#324e56;border-color:#9badb1}
+.legend-key.orange{background:#fff;border:2px solid var(--accent)}
+
+.footer{display:flex;align-items:center;justify-content:space-between;margin-top:20px;gap:20px;font-size:12px;color:#667775;line-height:1.7}
+.footer a{color:var(--teal);text-decoration:underline;text-underline-offset:3px}
+.mobile-help{display:none;font-size:11px;color:var(--muted);margin:10px 0 0}
+@media(max-width:900px){
+  .shell{padding:25px 14px 34px}
+  .masthead{align-items:flex-start}
+  
+  .toolbar{padding:15px}
+  .toolbar-top{align-items:flex-start;flex-direction:column}
+  .actions{justify-content:flex-start;width:100%}
+  .mobile-help{display:block}
+  .paper{padding:24px 24px 30px}
+}
+@media(max-width:540px){
+  .masthead{margin-bottom:17px}
+  .lede{font-size:12px}
+  .key-box{width:78px;min-width:78px}
+  .key-box strong{font-size:29px}
+  .key-description .key-headline{font-size:15px}
+  .small-btn{padding:0 9px}
+  .mode-switch button{padding:9px 8px;font-size:11px}
+  .slider-module{padding:18px 15px}
+  .slider-ticks span{font-size:9px}
+  .slider-top{align-items:flex-start;flex-direction:column}
+  .footer{flex-direction:column;align-items:flex-start;gap:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{scroll-behavior:auto!important;transition:none!important}
+}
+@media print{
+  @page{margin:8mm;size:A3 portrait}
+  body{background:#fff}
+  .shell{max-width:none;margin:0;padding:0}
+  .masthead{margin-bottom:8mm}
+  .masthead-side,.toolbar,.footer,.mobile-help,
+  .paper-area{margin:0}
+  .paper-overflow{overflow:visible;box-shadow:none;border-radius:0}
+  .paper{border:1px solid #555;width:100%;min-width:0;padding:18px 20px}
+  .paper:before{display:none}
+  .note-chip.accidental .note-face{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .chord-grid,.mode-columns,.extras{break-inside:avoid}
+  .chord-column,.mode-row,.chord-card{break-inside:avoid}
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   V3 · Readable typography
+   Most tiny labels increased by ~20–40%; horizontal space,
+   note chips and card heights enlarged to prevent crowding.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.shell{max-width:1510px;padding:34px 27px 46px}
+.overline{font-size:13px;letter-spacing:.15em}
+.overline .sigil{width:29px;height:29px;font-size:19px}
+h1{font-size:clamp(39px,4.5vw,62px)}
+.lede{font-size:16px}
+.masthead-side strong{font-size:13px}
+.masthead-side p{font-size:14px}
+.toolbar{padding:23px 26px}
+.toolbar-top{gap:16px}
+.key-box{width:112px;min-width:112px;padding:11px}
+.key-box small{font-size:11px}
+.key-box strong{font-size:43px}
+.key-description .key-caption{font-size:12px}
+.key-description .key-headline{font-size:21px}
+.key-description .key-sub{font-size:14px}
+.small-btn{height:42px;font-size:14px;padding:0 16px}
+.mode-switch button{font-size:14px;padding:12px 15px}
+.slider-module{padding:21px 26px 18px;margin-top:21px}
+.slider-label{font-size:16px}
+
+.slider-control{height:28px}
+.slider-ticks{margin-top:8px}
+.slider-ticks span{font-size:14px}
+.legend-row{margin-top:17px}
+.legend{font-size:13px;gap:18px}
+
+
+.mobile-help{font-size:13px}
+
+/* Main chart becomes wide enough for the larger notation. */
+.paper{min-width:1330px;padding:30px 35px 36px}
+.paper-heading{padding-bottom:16px;margin-bottom:23px}
+.paper-heading .number{font-size:43px}
+.paper-heading h2{font-size:22px}
+.paper-heading small{font-size:12px}
+
+.mode-columns{gap:38px}
+.sheet-label{padding-bottom:12px;margin-bottom:10px}
+.sheet-label strong{font-size:16px}
+.sheet-label span{font-size:13px}
+.mode-row{grid-template-columns:43px minmax(0,1fr);gap:11px;min-height:88px;padding:12px 0 11px}
+.roman{font-size:27px;padding-top:22px}
+.mode-title{min-height:23px;gap:10px}
+.mode-title strong{font-size:14px}
+.mode-title span{font-size:12px}
+.mode-title .mode-tonic{font-size:12px}
+.note-track{gap:4px;padding-top:5px;min-height:48px}
+.note-track:before{top:24px;left:13px;right:13px;height:7px}
+.note-chip{min-width:40px}
+.note-chip .note-face{font-size:21px;min-width:35px;min-height:34px;padding:3px 5px}
+.note-chip.accidental .note-face{font-size:13px;min-width:44px;padding:3px 5px}
+.note-chip .degree{font-size:11px;margin-top:5px}
+.note-chip.tonic .note-face{outline-width:2px;outline-offset:2px}
+
+.minor-guide{font-size:14px;gap:8px 13px;padding:16px 18px;margin-top:21px}
+.minor-guide strong{font-size:14px}
+.extras-heading{margin-top:27px}
+.extras{gap:16px}
+.extra-card{min-height:108px;padding:16px 16px 12px}
+.extra-title{font-size:14px}
+.extra-title small{font-size:12px;margin-left:8px}
+.extra-card .note-track{margin-top:12px}
+.extra-card .note-chip{min-width:32px}
+.extra-card .note-chip .note-face{font-size:18px;min-width:30px;min-height:31px}
+.extra-card .note-chip.accidental .note-face{font-size:11px;min-width:39px}
+.extra-card .note-chip .degree{font-size:10px}
+.extra-card .note-track:before{top:19px;height:6px}
+
+.chord-grid{gap:18px}
+.chord-category{font-size:15px;padding-bottom:12px;margin-bottom:5px}
+.chord-card{padding:15px 0 11px;min-height:107px}
+.chord-title{gap:5px;min-height:37px}
+.chord-title strong{font-size:13px}
+.chord-title span{font-size:12px}
+.chord-card .note-track{margin-top:9px;gap:2px}
+.chord-card .note-track:before{top:19px;height:6px}
+.chord-card .note-chip{min-width:0}
+.chord-card .note-chip .note-face{font-size:18px;min-width:30px;min-height:30px;padding:2px 3px}
+.chord-card .note-chip.accidental .note-face{font-size:11px;min-width:38px;padding:2px 3px}
+.chord-card .note-chip .degree{font-size:10px;margin-top:4px}
+.paper-bottom{margin-top:27px;padding-top:17px}
+.paper-bottom small{font-size:12px}
+
+.footer{font-size:14px;margin-top:23px}
+
+/* Preserve usable labels on narrow screens; chart remains horizontally scrollable. */
+@media(max-width:900px){
+  .shell{padding:25px 14px 35px}
+  .toolbar{padding:17px}
+  .key-box{width:93px;min-width:93px}
+  .key-box strong{font-size:36px}
+  .key-description .key-headline{font-size:18px}
+  .key-description .key-sub{font-size:13px}
+  .paper{min-width:1330px;padding:28px 30px 33px}
+  .slider-module{padding:19px 16px}
+}
+@media(max-width:540px){
+  .lede{font-size:14px}
+  .key-box{width:82px;min-width:82px}
+  .key-box strong{font-size:33px}
+  .mode-switch button{font-size:13px;padding:11px 12px}
+  .small-btn{font-size:13px}
+  .slider-label{font-size:14px}
+  
+  .slider-ticks span{font-size:11px}
+  .legend{font-size:11px;gap:11px}
+  
+  
+}
+@media print{
+  @page{size:A3 landscape;margin:8mm}
+}
+
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="masthead">
+    <div>
+      <div class="overline"><span class="sigil">♬</span> MUSIC THEORY</div>
+      <h1>Music <span>Slide Rule.</span></h1>
+      <p class="lede">音阶 · 调式 · 和弦 · 琶音</p>
+    </div>
+  </header>
+
+  <section class="toolbar" aria-label="调性选择">
+    <div class="toolbar-top">
+      <div class="selection">
+        <div class="key-summary">
+          <div class="key-box"><small>KEY / 调性</small><strong id="keyBadge">A</strong></div>
+          <div class="key-description">
+            <div class="key-caption">CURRENT MAJOR KEY / 当前大调</div>
+            <div class="key-headline"><span id="keyLong">A</span> Major <span style="color:#bd8b44">·</span> <span id="keySig">3♯</span></div>
+            <div class="key-sub">关系小调：<strong id="relativeKey">F♯</strong> minor · 左侧 Aeolian 即自然小调</div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="mode-switch" role="group" aria-label="音名显示方式">
+          <button type="button" data-names="both" aria-pressed="true">♯ / ♭</button>
+          <button type="button" data-names="sharp" aria-pressed="false">升号</button>
+          <button type="button" data-names="flat" aria-pressed="false">降号</button>
+        </div>
+        <button class="small-btn" type="button" id="printBtn">打印图表</button>
+      </div>
+    </div>
+    <section class="slider-module" aria-label="顶部调性滑块">
+      <div class="slider-top">
+        <label class="slider-label" for="keySlider">◂ &nbsp; KEY SLIDER / 调性滑尺 &nbsp; ▸</label>
+      </div>
+      <input class="slider-control" id="keySlider" type="range" min="0" max="11" step="1" value="9"
+             aria-label="大调调性滑块" aria-valuetext="A 大调，关系小调 F♯">
+      <div id="sliderTicks" class="slider-ticks" aria-hidden="true"></div>
+      <div class="legend-row">
+        <div class="legend">
+          <span><i class="legend-key"></i>自然音</span>
+          <span><i class="legend-key dark"></i>变化音 / 等音</span>
+          <span><i class="legend-key orange"></i>本行根音</span>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <div class="paper-area">
+    <p class="mobile-help">↔ 手机屏幕上可左右滑动图表查看全部内容，也可以用浏览器缩放。</p>
+    <div class="paper-overflow">
+      <article class="paper" id="chart" aria-label="完整音乐滑尺图表">
+        <div class="paper-heading">
+          <div class="paper-heading-main">
+            <span class="number">01</span>
+            <div><h2>SCALES & MODES <span style="color:#738684;font-size:11px;letter-spacing:0">音阶与调式</span></h2>
+            <small>MAJOR DIATONIC / HARMONIC MINOR</small></div>
+          </div>
+        </div>
+
+        <div class="mode-columns">
+          <section>
+            <div class="sheet-label"><strong>MAJOR DIATONIC MODES</strong><span>自然大调的 7 个调式</span></div>
+            <div id="majorModes"></div>
+          </section>
+          <section>
+            <div class="sheet-label"><strong>HARMONIC MINOR MODES</strong><span>和声小调的 7 个调式</span></div>
+            <div id="harmonicModes"></div>
+          </section>
+        </div>
+
+        <aside class="minor-guide" role="note" aria-label="自然小调与和声小调的关系">
+          <strong>为什么右边是和声小调？</strong>
+          <span>左侧第Ⅵ行 <b>AEOLIAN</b> 已经是自然小调；右侧和声小调把自然小调的第 7 音升高半音，增加不同的调式与和声选择。</span>
+          <span class="minor-example">例：A 自然小调 G → A 和声小调 G♯，可形成 E7 → Am 的强烈终止感。</span>
+        </aside>
+
+        <div class="paper-heading extras-heading">
+          <div class="paper-heading-main">
+            <span class="number">02</span>
+            <div><h2>RELATED SCALES <span style="color:#738684;font-size:11px;letter-spacing:0">常用音阶及进行</span></h2>
+            <small>PENTATONIC · MELODIC MINOR · SYMMETRICAL</small></div>
+          </div>
+        </div>
+        <section class="extras" id="extraScales" aria-label="其他常用音阶"></section>
+
+        <div class="paper-heading">
+          <div class="paper-heading-main">
+            <span class="number">03</span>
+            <div><h2>CHORDS & ARPEGGIOS <span style="color:#738684;font-size:11px;letter-spacing:0">和弦与琶音</span></h2>
+            <small>TRIADS · SEVENTHS · EXTENSIONS</small></div>
+          </div>
+          <small>ALL CHORDS USE THE SELECTED TONIC</small>
+        </div>
+        <section class="chord-grid" id="chordColumns" aria-label="和弦音程表"></section>
+        <div class="paper-bottom">
+          <small>音名显示采用十二平均律的等音关系。为了易读，升降记谱与个别复杂调的严格乐理拼写可能不同。</small>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>音乐滑尺参考：<a href="https://www.absolutelyunderstandguitar.com/desktop/SR/index.html" target="_blank" rel="noopener">Scotty's Famous Music Slide Rule</a></span>
+  </footer>
+</main>
+
+<noscript><p style="background:#fff4ce;text-align:center;padding:24px">请启用浏览器的 JavaScript，以查看音阶和和弦。</p></noscript>
+<script>
+(function () {
+  'use strict';
+
+  // 12 chromatic pitches, with optional enharmonic pairs.
+  const NAMES = [
+    ['C', 'C'], ['C♯', 'D♭'], ['D', 'D'], ['D♯', 'E♭'],
+    ['E', 'E'], ['F', 'F'], ['F♯', 'G♭'], ['G', 'G'],
+    ['G♯', 'A♭'], ['A', 'A'], ['A♯', 'B♭'], ['B', 'B']
+  ];
+  const BUTTON_LABELS = ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+  const KEY_LABELS = ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+  const KEY_SIGS = ['无升降','5♭','2♯','3♭','4♯','1♭','6♯','1♯','4♭','3♯','2♭','5♯'];
+  const RELATIVE_MINOR_LABELS = ['A','B♭','B','C','C♯','D','D♯','E','F','F♯','G','G♯'];
+  const MAJOR = [0,2,4,5,7,9,11];
+  const HARMONIC = [0,2,3,5,7,8,11];
+
+  const MAJOR_MODES = [
+    {roman:'I', name:'IONIAN', zh:'大调', degrees:['1','2','3','4','5','6','7','8']},
+    {roman:'ii', name:'DORIAN', zh:'多利亚 · 小调', degrees:['1','2','♭3','4','5','6','♭7','8']},
+    {roman:'iii', name:'PHRYGIAN', zh:'弗里吉亚 · 小调', degrees:['1','♭2','♭3','4','5','♭6','♭7','8']},
+    {roman:'IV', name:'LYDIAN', zh:'利底亚 · 大调', degrees:['1','2','3','♯4','5','6','7','8']},
+    {roman:'V', name:'MIXOLYDIAN', zh:'混合利底亚 · 大调', degrees:['1','2','3','4','5','6','♭7','8']},
+    {roman:'vi', name:'AEOLIAN', zh:'自然小调', degrees:['1','2','♭3','4','5','♭6','♭7','8']},
+    {roman:'vii°', name:'LOCRIAN', zh:'洛克里亚 · 半减', degrees:['1','♭2','♭3','4','♭5','♭6','♭7','8']}
+  ];
+  const HARMONIC_MODES = [
+    {roman:'i', name:'HARMONIC MINOR', zh:'和声小调', degrees:['1','2','♭3','4','5','♭6','7','8']},
+    {roman:'ii°', name:'LOCRIAN ♯6', zh:'洛克里亚升六', degrees:['1','♭2','♭3','4','♭5','6','♭7','8']},
+    {roman:'III+', name:'IONIAN ♯5', zh:'伊奥尼亚升五', degrees:['1','2','3','4','♯5','6','7','8']},
+    {roman:'iv', name:'DORIAN ♯4', zh:'多利亚升四', degrees:['1','2','♭3','♯4','5','6','♭7','8']},
+    {roman:'V', name:'PHRYGIAN MAJOR', zh:'弗里吉亚大调', degrees:['1','♭2','3','4','5','♭6','♭7','8']},
+    {roman:'VI', name:'LYDIAN ♯2', zh:'利底亚升二', degrees:['1','♯2','3','♯4','5','6','7','8']},
+    {roman:'vii°', name:'ULTRALOCRIAN', zh:'超级洛克里亚', degrees:['1','♭2','♭3','♭4','♭5','♭6','♭♭7','8']}
+  ];
+
+  const EXTRA = [
+    {name:'COMMON PROGRESSION', zh:'I – IV – V 常用进行', base:0,
+      intervals:[0,5,7], degrees:['I','IV','V']},
+    {name:'MAJOR PENTATONIC', zh:'大五声音阶', base:0,
+      intervals:[0,2,4,7,9,12], degrees:['1','2','3','5','6','8']},
+    {name:'MINOR PENTATONIC', zh:'小五声音阶', base:9,
+      intervals:[0,3,5,7,10,12], degrees:['1','♭3','4','5','♭7','8']},
+    {name:'MELODIC MINOR', zh:'旋律小调（IV级）', base:5,
+      intervals:[0,2,3,5,7,9,11,12], degrees:['1','2','♭3','4','5','6','7','8']},
+    {name:'WHOLE TONE', zh:'全音音阶', base:0,
+      intervals:[0,2,4,6,8,10,12], degrees:['1','2','3','♯4','♯5','♭7','8']},
+    {name:'DIMINISHED', zh:'减音阶（全–半）', base:2,
+      intervals:[0,2,3,5,6,8,9,11,12], degrees:['1','2','♭3','4','♭5','♭6','6','7','8']}
+  ];
+
+  const CHORD_COLUMNS = [
+    {section:'MAJOR / 大调及延伸', chords:[
+      ['MAJOR TRIAD','大三和弦',[0,4,7],['1','3','5']],
+      ['SEVEN · DOMINANT 7','属七和弦',[0,4,7,10],['1','3','5','♭7']],
+      ['MAJOR SEVEN · maj7','大七和弦',[0,4,7,11],['1','3','5','7']],
+      ['SIX · 6','大六和弦',[0,4,7,9],['1','3','5','6']],
+      ['SUSPENDED 4 · sus4','挂四和弦',[0,5,7],['1','4','5']],
+      ['NINE · 9','九和弦',[0,4,7,10,2],['1','3','5','♭7','9']],
+      ['ADD 9 · add9','加九和弦',[0,4,7,2],['1','3','5','9']],
+      ['ELEVEN · 11','十一和弦',[0,4,7,10,2,5],['1','3','5','♭7','9','11']],
+      ['THIRTEEN · 13','十三和弦',[0,4,7,10,2,5,9],['1','3','5','♭7','9','11','13']]
+    ]},
+    {section:'ALTERED / 增音及变化', chords:[
+      ['AUGMENTED TRIAD','增三和弦',[0,4,8],['1','3','♯5']],
+      ['SEVEN SHARP FIVE · 7♯5','属七升五',[0,4,8,10],['1','3','♯5','♭7']]
+    ]},
+    {section:'MINOR / 小调及延伸', chords:[
+      ['MINOR TRIAD','小三和弦',[0,3,7],['1','♭3','5']],
+      ['MINOR SEVEN · m7','小七和弦',[0,3,7,10],['1','♭3','5','♭7']],
+      ['MINOR MAJOR 7 · mMaj7','小大七和弦',[0,3,7,11],['1','♭3','5','7']],
+      ['MINOR SIX · m6','小六和弦',[0,3,7,9],['1','♭3','5','6']],
+      ['MINOR NINE · m9','小九和弦',[0,3,7,10,2],['1','♭3','5','♭7','9']],
+      ['MAJOR SIX ADD NINE · 6/9','大六加九',[0,4,7,9,2],['1','3','5','6','9']],
+      ['SEVEN SHARP NINE · 7♯9','属七升九',[0,4,7,10,3],['1','3','5','♭7','♯9']]
+    ]},
+    {section:'DIMINISHED / 减音及变化', chords:[
+      ['DIMINISHED TRIAD','减三和弦',[0,3,6],['1','♭3','♭5']],
+      ['DIMINISHED SEVEN · dim7','减七和弦',[0,3,6,9],['1','♭3','♭5','♭♭7']],
+      ['MINOR SEVEN ♭5 · m7♭5','半减七和弦',[0,3,6,10],['1','♭3','♭5','♭7']],
+      ['SEVEN FLAT FIVE · 7♭5','属七降五',[0,4,6,10],['1','3','♭5','♭7']],
+      ['SEVEN FLAT NINE · 7♭9','属七降九',[0,4,7,10,1],['1','3','5','♭7','♭9']]
+    ]}
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const mod12 = (n) => ((n % 12) + 12) % 12;
+  const restore = (() => {
+    try { return JSON.parse(localStorage.getItem('offlineMusicSlideRule.v1')) || {}; }
+    catch (_) { return {}; }
+  })();
+  let key = Number.isInteger(restore.key) && restore.key >= 0 && restore.key < 12 ? restore.key : 9;
+  let naming = ['both','sharp','flat'].includes(restore.naming) ? restore.naming : 'both';
+
+  function pitchName(pc) {
+    const pair = NAMES[mod12(pc)];
+    if (naming === 'flat') return pair[1];
+    if (naming === 'sharp') return pair[0];
+    return pair[0] === pair[1] ? pair[0] : pair[0] + '/' + pair[1];
+  }
+
+  function noteChip(pc, degree, tonic) {
+    const pair = NAMES[mod12(pc)];
+    const accidental = pair[0] !== pair[1];
+    const both = naming === 'both' && accidental;
+    const names = both
+      ? '<span>' + pair[0] + '</span><span>' + pair[1] + '</span>'
+      : '<span>' + (naming === 'flat' ? pair[1] : pair[0]) + '</span>';
+    const spoken = pair[0] === pair[1] ? pair[0] : pair[0] + ' / ' + pair[1];
+    return '<span class="note-chip' + (accidental ? ' accidental' : '') + (tonic ? ' tonic' : '') +
+      '" title="' + spoken + ' · ' + degree +
+      '" aria-label="' + spoken + '，' + degree + '">' +
+      '<span class="note-face">' + names + '</span><span class="degree">' + degree + '</span></span>';
+  }
+
+  function noteTrack(offsets, degrees, base) {
+    let content = '';
+    for (let i=0; i<offsets.length; i++) {
+      content += noteChip(base + offsets[i], degrees[i] || '', i===0);
+    }
+    return '<div class="note-track">' + content + '</div>';
+  }
+
+  function modalNotes(notes, start) {
+    const offsets = [];
+    for (let j=0; j<8; j++) {
+      const at = start + j;
+      offsets.push(notes[at % 7] + (at >= 7 ? 12 : 0));
+    }
+    return offsets;
+  }
+
+  function renderModes(which, modes, notes, base) {
+    return modes.map((m,i) => {
+      const offsets = modalNotes(notes, i);
+      const root = mod12(base + offsets[0]);
+      return '<div class="mode-row">' +
+        '<span class="roman">' + m.roman + '</span>' +
+        '<div><div class="mode-title"><strong>' + m.name + '</strong><span>' + m.zh +
+        '</span><span class="mode-tonic">' + pitchName(root) + '</span></div>' +
+        noteTrack(offsets, m.degrees, base) + '</div></div>';
+    }).join('');
+  }
+
+  function renderExtras() {
+    return EXTRA.map(e =>
+      '<div class="extra-card"><div class="extra-title">' +
+      e.name + '<small>' + e.zh + '</small></div>' +
+      noteTrack(e.intervals, e.degrees, key + e.base) + '</div>'
+    ).join('');
+  }
+
+  function renderChords() {
+    return CHORD_COLUMNS.map(group =>
+      '<div class="chord-column"><div class="chord-category">' + group.section + '</div>' +
+      group.chords.map(c =>
+        '<div class="chord-card"><div class="chord-title"><strong>' + c[0] +
+        '</strong><span>' + c[1] + '</span></div>' +
+        noteTrack(c[2], c[3], key) + '</div>'
+      ).join('') + '</div>'
+    ).join('');
+  }
+
+  function displayKeyName() {
+    // The key signature always agrees with the conventional written key name.
+    // The sharp/flat control only changes enharmonic labels on individual notes.
+    return KEY_LABELS[key];
+  }
+
+  function displayRelativeMinor() {
+    return RELATIVE_MINOR_LABELS[key];
+  }
+
+  function render() {
+    $('majorModes').innerHTML = renderModes('major', MAJOR_MODES, MAJOR, key);
+    $('harmonicModes').innerHTML = renderModes('harmonic', HARMONIC_MODES, HARMONIC, key + 9);
+    $('extraScales').innerHTML = renderExtras();
+    $('chordColumns').innerHTML = renderChords();
+    $('keyBadge').textContent = displayKeyName();
+    $('keyLong').textContent = displayKeyName();
+    $('relativeKey').textContent = displayRelativeMinor();
+    $('keySig').textContent = KEY_SIGS[key];
+    $('keySlider').value = String(key);
+    $('keySlider').setAttribute('aria-valuetext', displayKeyName() + ' 大调，关系小调 ' + displayRelativeMinor());
+    document.querySelectorAll('[data-names]').forEach((btn) => {
+      btn.setAttribute('aria-pressed', String(btn.dataset.names === naming));
+    });
+    document.querySelectorAll('.slider-ticks span').forEach((tick) => {
+      tick.classList.toggle('active', Number(tick.dataset.key) === key);
+    });
+    document.title = 'Music Slide Rule · ' + displayKeyName() + ' Major';
+    try { localStorage.setItem('offlineMusicSlideRule.v1', JSON.stringify({key, naming})); }
+    catch (_) { /* localStorage can be disabled on some file:// browsers; still fully functional */ }
+  }
+
+  function setKey(n) { key = mod12(Number(n)); render(); }
+  function setNaming(s) { naming = s; render(); }
+
+  $('sliderTicks').innerHTML = BUTTON_LABELS.map((label,i) =>
+    '<span data-key="' + i + '">' + label + '</span>'
+  ).join('');
+
+  $('keySlider').addEventListener('input', (e) => setKey(e.target.value));
+  document.querySelectorAll('[data-names]').forEach((btn) => {
+    btn.addEventListener('click', () => setNaming(btn.dataset.names));
+  });
+  $('printBtn').addEventListener('click', () => window.print());
+
+  render();
+})();
+</script>
+</body>
+</html>
